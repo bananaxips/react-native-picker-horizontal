@@ -11,7 +11,7 @@ import {
   Platform
 } from 'react-native';
 
-hgjhgjgh
+
 export interface Props extends ScrollViewProps {
   data: any[],
   renderItem: (item: any, index: number) => ReactNode,
@@ -67,8 +67,10 @@ export default (props: Props) => {
 
   const onMomentumScrollEnd = ({nativeEvent: {contentOffset: {x}}}: NativeSyntheticEvent<NativeScrollEvent>) => {
     const selected = Math.round(x / itemWidth);
-    changePosition(selected);
-  }
+    if(onChange){
+      onChange(selected);
+    };
+  };
 
   const onScrollBeginDrag = () => {
     fixed = false;
@@ -87,6 +89,9 @@ export default (props: Props) => {
     if (position > data.length - 1) {
       fixedPosition = data.length - 1;
     }
+    if(fixedPosition > 3){
+      fixedPosition = fixedPosition-3;
+    }
 
     if (onChange) {
       onChange(fixedPosition);
@@ -96,7 +101,9 @@ export default (props: Props) => {
       if (!fixed && flatListRef && flatListRef.current) {
         fixed = true;
         // @ts-ignore
-        flatListRef.current.scrollToIndex({animated: true, index: "" + fixedPosition});
+        if(fixedPosition > 3){
+          flatListRef.current.scrollToIndex({animated: true, index:"" + fixedPosition});
+        }
       }
     }, Platform.OS == "ios" ? 50 : 0);
   }
@@ -119,6 +126,7 @@ export default (props: Props) => {
         keyExtractor={(_item, index) => index.toString()}
         onMomentumScrollBegin={onMomentumScrollBegin}
         onMomentumScrollEnd={onMomentumScrollEnd}
+        snapToOffsets={Array.from(Array(data.length).keys()).slice(1).map((i) => i * itemWidth)}
         onScrollBeginDrag={onScrollBeginDrag}
         onScrollEndDrag={onScrollEndDrag}
         contentContainerStyle={{
@@ -138,14 +146,7 @@ export default (props: Props) => {
             defaultOpacityConfig(index, itemWidth));
 
           return (
-            <TouchableWithoutFeedback onPress={() => {
-              if (flatListRef && flatListRef.current) {
-                fixed = true;
-                // @ts-ignore
-                flatListRef.current.scrollToIndex({animated: true, index: "" + index});
-              }
-              if (onChange) { onChange(index); }
-            }} key={index}>
+            <TouchableWithoutFeedback key={index}>
               <Animated.View style={{transform: [{scale}], opacity}}>
                 {renderItem(item, index)}
               </Animated.View>
